@@ -64,19 +64,43 @@ Enable/disable in `data/config.json` → `modules`.
 
 Adding a cog: drop `cogs/yourcog.py` with a `setup(bot)`, add its name to `modules`.
 
+## Federation (no central server)
+
+NitoBots sync the earn ledger by gossip. Each bot runs a small endpoint
+(`POST /gossip`, `GET /ledger`) and lists peers in `data/config.json`:
+
+```json
+"peers": ["https://nito.example.com"],
+"network_secret": "shared-phrase",   // same on your bots = private federation
+"gossip_host": "127.0.0.1", "gossip_port": 8787
+```
+
+Security, by default:
+- Every attestation is **ed25519-signed and self-validating** — a forged one is dropped on
+  arrival, so the endpoint can be open without risking fake payouts.
+- A **`network_secret`** (same on all your bots) requires an HMAC on every request — a
+  private, authenticated federation.
+- The endpoint **binds `127.0.0.1`** by default. To federate across the internet, expose it
+  over **TLS** via a reverse proxy or a Cloudflare tunnel (`cloudflared tunnel ... ->
+  http://localhost:8787`); user activity then travels encrypted between bots.
+
+> Privacy note: attestations carry Discord IDs + per-epoch message counts. Use TLS + a
+> private `network_secret` if you don't want to share that. Discord IDs are enumerable, so
+> hashing wouldn't give strong anonymity — we don't pretend it would.
+
 ## Tested
 
 ```bash
-python3 tests/test_economy.py   # the message->Nitter economy, fully offline (5/5)
+python3 tests/test_economy.py   # message->Nitter economy, offline (5/5)
+python3 tests/test_gossip.py    # P2P gossip over real HTTP: convergence, auth, forgery (4/4)
 ```
 
-The economy core (earning, corroboration, forgery rejection, transfers, cross-server
-balance) is unit-tested without Discord. Live Discord behavior needs a bot token.
+Both run without Discord. Live Discord behavior needs a bot token.
 
 ## Roadmap
 
-v0.1 (this): core + installer + `meta`/`earn`/`wallet` + tested economy.
-Next: gossip receive endpoint (full P2P), then `social`, `admin`, `automod` (goodfaith),
+v0.1 (this): core + installer + `meta`/`earn`/`wallet` + **federated gossip (secure by
+default)** + tested economy & P2P. Next: `social`, `admin`, `automod` (goodfaith),
 `llm` (+ persona + holographic memory), `voice`.
 
 ## License

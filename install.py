@@ -35,9 +35,18 @@ def main():
     DATA.mkdir(exist_ok=True)
     cfg = DATA / "config.json"
     if not cfg.exists():
+        secret, peers = "", []
+        try:
+            secret = input("· network_secret for a private federation (Enter for open): ").strip()
+            peer = input("· a peer NitoBot URL to federate with (Enter to skip): ").strip()
+            if peer:
+                peers = [peer]
+        except EOFError:
+            pass
         cfg.write_text(json.dumps({
             "quorum": 2, "epoch_seconds": 600,
-            "modules": ["meta", "earn", "wallet"], "peers": [],
+            "modules": ["meta", "earn", "wallet"], "peers": peers,
+            "gossip_host": "127.0.0.1", "gossip_port": 8787, "network_secret": secret,
             "llm": {"enabled": False, "base_url": "", "api_key_env": "NITOBOT_LLM_KEY", "model": ""},
         }, indent=2), encoding="utf-8")
         print(f"· wrote {cfg.relative_to(ROOT)}")

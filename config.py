@@ -26,6 +26,9 @@ DEFAULTS = {
     "epoch_seconds": 600,   # message-commit window per channel
     "modules": ["meta", "earn", "wallet"],
     "peers": [],            # NitoBot gossip endpoints (federation; no central server)
+    "gossip_host": "127.0.0.1",   # bind loopback by default; expose via TLS proxy/Cloudflare tunnel
+    "gossip_port": 8787,
+    "network_secret": "",   # set the same value on your bots for a private, authenticated federation
     "llm": {"enabled": False, "base_url": "", "api_key_env": "NITOBOT_LLM_KEY", "model": ""},
 }
 

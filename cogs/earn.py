@@ -2,7 +2,6 @@
 gossips the signed attestation to peer NitoBots so earnings can be corroborated."""
 import time
 
-import aiohttp
 import discord
 from discord.ext import commands, tasks
 
@@ -34,19 +33,7 @@ class Earn(commands.Cog):
                 att = econ.seal(epoch)
                 econ._pending.pop(epoch, None)
                 if att:
-                    await self._gossip(att)
-
-    async def _gossip(self, att: dict):
-        peers = self.bot.cfg.get("peers", [])
-        if not peers:
-            return
-        async with aiohttp.ClientSession() as s:
-            for url in peers:
-                try:
-                    async with s.post(f"{url.rstrip('/')}/attest", json=att, timeout=5):
-                        pass
-                except Exception:
-                    pass  # a peer being down must never break earning
+                    await self.bot.gossip.publish(att)  # corroborate with peer NitoBots
 
     @flush.before_loop
     async def _before(self):

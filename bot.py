@@ -9,6 +9,7 @@ from discord.ext import commands
 
 import config
 from economy import Economy
+from peers import GossipServer, GossipClient
 
 
 class NitoBot(commands.Bot):
@@ -18,13 +19,18 @@ class NitoBot(commands.Bot):
         super().__init__(command_prefix="!", intents=intents, help_command=None)
         self.cfg = cfg
         self.economy = Economy(config.load_instance(), quorum=cfg["quorum"])
+        self.gossip = GossipClient(self.economy, cfg["peers"], cfg["network_secret"])
+        self._gossip_server = GossipServer(
+            self.economy, cfg["gossip_host"], cfg["gossip_port"], cfg["network_secret"])
 
     async def setup_hook(self):
+        await self._gossip_server.start()       # federate with peer NitoBots
         for name in self.cfg["modules"]:
             await self.load_extension(f"cogs.{name}")
-        await self.tree.sync()  # register slash commands
+        await self.tree.sync()                   # register slash commands
 
     async def on_ready(self):
+        await self.gossip.pull()                 # sync the federated ledger on startup
         print(f"Nito is online as {self.user} ({len(self.guilds)} guild(s)).")
 
 
