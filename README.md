@@ -59,7 +59,7 @@ Enable/disable in `data/config.json` → `modules`.
 | `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
 | `admin` | `/kick` `/ban` `/timeout` `/purge` `/slowmode`; guards + rate limits | ✓ |
 | `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith); starts in SHADOW | ✓ (opt-in) |
-| `llm` | `/ask` + replies on mention; OpenAI-compatible, persona + memory | ✓ (opt-in) |
+| `llm` | `/ask` + replies on mention; OpenAI-compatible, persona + holographic (HDC) memory | ✓ (opt-in) |
 | `voice` | `/join` `/leave` + transcript bridge (STT is external) | ✓ (opt-in) |
 
 Adding a cog: drop `cogs/yourcog.py` with a `setup(bot)`, add its name to `modules`.
@@ -97,7 +97,18 @@ python3 tests/test_social.py    # social action counters (3/3)
 python3 tests/test_automod.py   # activity store + goodfaith decisions (2/2; needs goodfaith)
 python3 tests/test_llm.py       # memory recall + OpenAI-compatible client via mock server (3/3)
 python3 tests/test_admin_voice.py  # rate limiter + moderation guard + voice parser (3/3)
+python3 tests/test_holo.py      # holographic HDC memory: portable, multilingual, cheap (6/6)
 ```
+
+## Holographic memory
+
+The `llm` cog's memory is a real **hyperdimensional-computing (HDC/VSA)** store, not a
+keyword index: text → one 8192-bit hypervector via byte-n-gram bind/bundle, recall by
+Hamming distance. It is language-agnostic (any UTF-8), robust to typos/morphology, and
+bitwise-cheap (~2.6 ms encode, ~8 ms to scan 1000 memories in Python/numpy; sub-µs in
+native uint64). The encoding is a fixed cross-language spec — see
+[`HOLO_SPEC.md`](HOLO_SPEC.md) and the conformance fixture — so any port produces identical
+vectors. `remember/recall` is the drop-in point for a different backend.
 
 All run without Discord. Live Discord behavior needs a bot token.
 
