@@ -23,13 +23,26 @@ class LLMClient:
         self.model = model
         self.api_key = api_key
 
-    async def chat(self, messages: List[dict], max_tokens: int = 300, temperature: float = 0.6) -> str:
+    async def _post(self, body: dict) -> dict:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        body = {"model": self.model, "messages": messages,
-                "max_tokens": max_tokens, "temperature": temperature}
         async with ClientSession(timeout=ClientTimeout(total=60)) as s:
             async with s.post(f"{self.base}/chat/completions", json=body, headers=headers) as r:
-                data = await r.json()
+                return await r.json()
+
+    async def chat(self, messages: List[dict], max_tokens: int = 300, temperature: float = 0.6) -> str:
+        data = await self._post({"model": self.model, "messages": messages,
+                                 "max_tokens": max_tokens, "temperature": temperature})
         return data["choices"][0]["message"]["content"].strip()
+
+    async def chat_full(self, messages: List[dict], tools: List[dict] = None,
+                        max_tokens: int = 400, temperature: float = 0.4) -> dict:
+        """Returns the full assistant message (may carry tool_calls) for the agent loop."""
+        body = {"model": self.model, "messages": messages,
+                "max_tokens": max_tokens, "temperature": temperature}
+        if tools:
+            body["tools"] = tools
+            body["tool_choice"] = "auto"
+        data = await self._post(body)
+        return data["choices"][0]["message"]

@@ -59,7 +59,7 @@ Enable/disable in `data/config.json` → `modules`.
 | `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
 | `admin` | `/kick` `/ban` `/timeout` `/purge` `/slowmode`; guards + rate limits | ✓ |
 | `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith); starts in SHADOW | ✓ (opt-in) |
-| `llm` | `/ask` + replies on mention; OpenAI-compatible, persona + holographic (HDC) memory | ✓ (opt-in) |
+| `llm` | **agentic** `/ask` + replies on mention; OpenAI-compatible tool-calling, persona + holographic memory | ✓ (opt-in) |
 | `voice` | `/join` `/leave` + transcript bridge (STT is external) | ✓ (opt-in) |
 
 Adding a cog: drop `cogs/yourcog.py` with a `setup(bot)`, add its name to `modules`.
@@ -98,6 +98,27 @@ python3 tests/test_automod.py   # activity store + goodfaith decisions (2/2; nee
 python3 tests/test_llm.py       # memory recall + OpenAI-compatible client via mock server (3/3)
 python3 tests/test_admin_voice.py  # rate limiter + moderation guard + voice parser (3/3)
 python3 tests/test_holo.py      # holographic HDC memory: portable, multilingual, cheap (6/6)
+python3 tests/test_agent.py     # agent tool-calling loop + admin guardrails (3/3)
+python3 tests/test_native.py    # C reference reproduces identical vectors (conformance)
+```
+
+## Agentic (OpenAI-compatible tool calling)
+
+The `llm` cog isn't just chat — Nito is an **agent**. Through standard OpenAI-compatible
+function calling she can decide to use tools, run them, and answer with the results:
+
+- **Conversation tools (anyone):** `get_balance`, `leaderboard`, `recall_memory`.
+- **Admin tools (admins only):** `timeout_member`, `purge_messages`, `set_slowmode`.
+
+So an admin can say *“Nito, mute that spammer for 10 minutes”* and she'll call
+`timeout_member` — but the model only **proposes**; the code **authorizes**. Every admin
+tool is gated twice: in `agent.dispatch` (caller must be admin) and again by Discord
+permission + role-hierarchy guards in the handler. The LLM can never escalate privilege,
+and Nito never claims to have acted unless a tool actually confirmed it. Works with any
+OpenAI-compatible endpoint (OpenAI, Ollama, llama.cpp, LM Studio). See `agent.py`.
+
+```text
+model -> tool_calls -> dispatch (guarded) -> tool results -> final reply   (max 4 steps)
 ```
 
 ## Holographic memory
