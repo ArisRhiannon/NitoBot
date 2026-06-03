@@ -57,10 +57,10 @@ Enable/disable in `data/config.json` → `modules`.
 | `earn` | (passive: counts messages, seals & gossips epochs) | ✓ |
 | `wallet` | `/balance` `/pay` `/leaderboard` | ✓ |
 | `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
-| `admin` | moderation, best-practice rate limits | planned |
+| `admin` | `/kick` `/ban` `/timeout` `/purge` `/slowmode`; guards + rate limits | ✓ |
 | `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith); starts in SHADOW | ✓ (opt-in) |
 | `llm` | `/ask` + replies on mention; OpenAI-compatible, persona + memory | ✓ (opt-in) |
-| `voice` | voice-command bridge | planned |
+| `voice` | `/join` `/leave` + transcript bridge (STT is external) | ✓ (opt-in) |
 
 Adding a cog: drop `cogs/yourcog.py` with a `setup(bot)`, add its name to `modules`.
 
@@ -96,15 +96,17 @@ python3 tests/test_gossip.py    # P2P gossip over real HTTP: convergence, auth, 
 python3 tests/test_social.py    # social action counters (3/3)
 python3 tests/test_automod.py   # activity store + goodfaith decisions (2/2; needs goodfaith)
 python3 tests/test_llm.py       # memory recall + OpenAI-compatible client via mock server (3/3)
+python3 tests/test_admin_voice.py  # rate limiter + moderation guard + voice parser (3/3)
 ```
 
 All run without Discord. Live Discord behavior needs a bot token.
 
 ## Roadmap
 
-Done: core + installer + **secure federated gossip** + `meta`/`earn`/`wallet`/`social`,
-plus opt-in `automod` (goodfaith) and `llm` (OpenAI-compatible + persona + memory).
-Next: `admin` (moderation with best-practice rate limits) and `voice` (voice-command bridge).
+All planned cogs are in: `meta` · `earn` · `wallet` · `social` · `admin`, plus opt-in
+`automod` (goodfaith), `llm` (OpenAI-compatible + persona + memory), and `voice`, over a
+**secure federated gossip** layer. Next: gossip peer auto-discovery, richer LLM memory
+backends, and bundled voice STT — all on top of the tested cores here.
 
 ## License
 

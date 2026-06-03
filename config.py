@@ -24,7 +24,7 @@ _load_dotenv()
 DEFAULTS = {
     "quorum": 2,            # independent NitoBots that must agree to confirm earnings
     "epoch_seconds": 600,   # message-commit window per channel
-    "modules": ["meta", "earn", "wallet", "social"],
+    "modules": ["meta", "earn", "wallet", "social", "admin"],
     "peers": [],            # NitoBot gossip endpoints (federation; no central server)
     "gossip_host": "127.0.0.1",   # bind loopback by default; expose via TLS proxy/Cloudflare tunnel
     "gossip_port": 8787,

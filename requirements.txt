@@ -2,3 +2,4 @@ discord.py>=2.3,<3
 cryptography>=41,<46
 aiohttp>=3.8,<4
 goodfaith @ git+https://github.com/ArisRhiannon/goodfaith.git  # optional: enables the automod cog
+PyNaCl>=1.5,<2  # optional: enables the voice cog (join/leave)
