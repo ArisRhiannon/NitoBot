@@ -45,7 +45,7 @@ def main():
             pass
         cfg.write_text(json.dumps({
             "quorum": 2, "epoch_seconds": 600,
-            "modules": ["meta", "earn", "wallet"], "peers": peers,
+            "modules": ["meta", "earn", "wallet", "social"], "peers": peers,
             "gossip_host": "127.0.0.1", "gossip_port": 8787, "network_secret": secret,
             "llm": {"enabled": False, "base_url": "", "api_key_env": "NITOBOT_LLM_KEY", "model": ""},
         }, indent=2), encoding="utf-8")

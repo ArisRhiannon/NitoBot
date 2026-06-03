@@ -56,7 +56,7 @@ Enable/disable in `data/config.json` → `modules`.
 | `meta` | `/ping` | ✓ |
 | `earn` | (passive: counts messages, seals & gossips epochs) | ✓ |
 | `wallet` | `/balance` `/pay` `/leaderboard` | ✓ |
-| `social` | `/hug` `/pat` `/kiss` + counters | planned |
+| `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
 | `admin` | moderation, best-practice rate limits | planned |
 | `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith) | planned |
 | `llm` | OpenAI-compatible chat (persona + memory) | planned |
