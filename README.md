@@ -10,7 +10,7 @@
 **A small, modular Discord bot whose economy is the [NitoChain](https://github.com/ArisRhiannon/NitoChain):
 the only way to earn Nito is to write, and earnings follow your Discord ID across every
 server and fork — with no central server.** Nito herself is quiet and polite (see
-[`persona.md`](persona.md)) — no emojis, no cringe.
+[`persona.md`](persona.md)) 
 
 ## Install (Windows & Linux/macOS)
 
