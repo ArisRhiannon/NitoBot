@@ -8,9 +8,11 @@ A *real* holographic associative memory, not a keyword index:
   English, emoji) with no tokenizer, model, or training.
 - All ops are bitwise — deterministic random symbol vectors (hashing), circular shift for
   position, XOR to bind, majority vote to bundle; recall is Hamming distance. No floats in
-  the algorithm, no GPU, ~1 KB per memory. The algorithm is uint64-bitwise and ports to C /
-  a microcontroller at sub-microsecond cost; this Python/numpy backend measures ≈2.6 ms to
-  encode a message and ≈8 ms to scan 1000 memories — cheap enough for edge use.
+  the algorithm, no GPU, ~1 KB per memory. Cost is O(len(text) · DIM): ≈2.6 ms to encode a
+  message and (vectorized) ≈55 ms to scan 10k memories in Python/numpy; a numpy-free,
+  microcontroller-capable C reference (native/holo.c) reproduces identical vectors at a
+  similar ≈2.3 ms. It is not sub-microsecond at DIM=8192 — the win of the native build is
+  portability, not raw speed.
 - The encoding is a fixed, documented spec (seed + DIM + n-gram + ops), so any
   implementation in any language produces **identical, interoperable** hypervectors
   (see HOLO_SPEC.md).
@@ -79,28 +81,45 @@ def similarity(a: int, b: int) -> float:
     return 1.0 - hamming(a, b) / DIM
 
 
+_POP = np.array([bin(i).count("1") for i in range(256)], dtype=np.uint16)  # byte popcount LUT
+
+
 class MemoryStore:
-    """Holographic associative memory. Drop-in: same remember/recall as before."""
+    """Holographic associative memory. Drop-in: same remember/recall as before.
+
+    Vectors are kept as a packed (N, DIM/8) uint8 matrix in memory; recall is a single
+    vectorized Hamming over all rows (popcount LUT), so it scales to 10k+ memories."""
     def __init__(self, path: str = ":memory:", half_life_days: float = 14.0):
         self.db = sqlite3.connect(path)
         self.half_life = half_life_days * 86400
         self.db.execute("CREATE TABLE IF NOT EXISTS mem(scope TEXT, text TEXT, vec TEXT, ts REAL)")
         self.db.commit()
+        self._cache = {}   # scope -> {"rows": [uint8(B)], "texts": [...], "ts": [...], "mat": ndarray|None}
+        for scope, text, vec_hex, ts in self.db.execute("SELECT scope, text, vec, ts FROM mem"):
+            self._cache_add(scope, text, np.frombuffer(bytes.fromhex(vec_hex), dtype=np.uint8), ts)
+
+    def _cache_add(self, scope, text, packed, ts):
+        c = self._cache.setdefault(str(scope), {"rows": [], "texts": [], "ts": [], "mat": None})
+        c["rows"].append(packed); c["texts"].append(text); c["ts"].append(ts); c["mat"] = None
 
     def remember(self, scope, text: str, ts: float = None) -> None:
-        vec = encode(text).to_bytes(_BYTES, "big").hex()
+        ts = time.time() if ts is None else ts
+        packed = np.packbits(encode_bits(text))
         self.db.execute("INSERT INTO mem(scope, text, vec, ts) VALUES(?,?,?,?)",
-                        (str(scope), text, vec, time.time() if ts is None else ts))
+                        (str(scope), text, packed.tobytes().hex(), ts))
         self.db.commit()
+        self._cache_add(scope, text, packed, ts)
 
     def recall(self, scope, query: str, k: int = 3, now: float = None):
+        c = self._cache.get(str(scope))
+        if not c or not c["texts"]:
+            return []
         now = time.time() if now is None else now
-        qv = encode(query)
-        scored = []
-        for text, vec_hex, ts in self.db.execute(
-                "SELECT text, vec, ts FROM mem WHERE scope=?", (str(scope),)):
-            sim = 1.0 - (qv ^ int.from_bytes(bytes.fromhex(vec_hex), "big")).bit_count() / DIM
-            recency = 0.5 ** ((now - ts) / self.half_life)
-            scored.append((sim + 0.05 * recency, ts, text))   # similarity leads; recency breaks ties
-        scored.sort(key=lambda x: (-x[0], -x[1]))
-        return [t for _, _, t in scored[:k]]
+        if c["mat"] is None:
+            c["mat"] = np.vstack(c["rows"])
+        q = np.packbits(encode_bits(query))
+        dist = _POP[np.bitwise_xor(c["mat"], q)].sum(axis=1)          # Hamming to every memory at once
+        recency = 0.5 ** ((now - np.asarray(c["ts"])) / self.half_life)
+        score = (1.0 - dist / DIM) + 0.05 * recency                  # similarity leads; recency breaks ties
+        idx = np.argsort(-score, kind="stable")[:k]
+        return [c["texts"][i] for i in idx]

@@ -105,10 +105,12 @@ python3 tests/test_holo.py      # holographic HDC memory: portable, multilingual
 The `llm` cog's memory is a real **hyperdimensional-computing (HDC/VSA)** store, not a
 keyword index: text → one 8192-bit hypervector via byte-n-gram bind/bundle, recall by
 Hamming distance. It is language-agnostic (any UTF-8), robust to typos/morphology, and
-bitwise-cheap (~2.6 ms encode, ~8 ms to scan 1000 memories in Python/numpy; sub-µs in
-native uint64). The encoding is a fixed cross-language spec — see
-[`HOLO_SPEC.md`](HOLO_SPEC.md) and the conformance fixture — so any port produces identical
-vectors. `remember/recall` is the drop-in point for a different backend.
+bitwise (no model/GPU, ~1 KB/memory). Cost is O(len·DIM): ≈2.6 ms to encode and a
+vectorized ≈55 ms to scan 10k memories. The encoding is a fixed cross-language spec
+([`HOLO_SPEC.md`](HOLO_SPEC.md)); `native/holo.c` is an independent, numpy-free C
+implementation that reproduces **byte-identical** vectors (verified in `tests/test_native.py`)
+— so the memory is portable to other languages and microcontrollers. `remember/recall` is
+the drop-in point for a different backend.
 
 All run without Discord. Live Discord behavior needs a bot token.
 

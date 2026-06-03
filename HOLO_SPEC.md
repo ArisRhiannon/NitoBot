@@ -8,11 +8,9 @@ algorithm is pure bitwise Hyperdimensional Computing (HDC/VSA) — no model, no 
 - `DIM = 8192` (bits per hypervector), `NGRAM = 3`, `SEED = "nito-hdc-v1"`.
 
 ## Symbol vector — one per byte value `b` (0..255)
-1. `material = SHA256(SEED_utf8 ‖ b) ‖ SHA256(SEED_utf8 ‖ b ‖ u32be(1)) ‖ …` until
-   `len ≥ DIM/8` bytes; take the first `DIM/8 = 1024` bytes. (The first block uses no
-   counter; subsequent blocks append `u32be(ctr)` with `ctr = 1, 2, …`.)
-
-   > Note: the first block is `SHA256(SEED ‖ b)`. Match the reference exactly.
+1. `material = SHA256(SEED_utf8 ‖ b ‖ u32be(0)) ‖ SHA256(SEED_utf8 ‖ b ‖ u32be(1)) ‖ …`
+   until `len ≥ DIM/8` bytes; take the first `DIM/8 = 1024` bytes. **Every** block appends
+   the big-endian u32 counter, starting at `ctr = 0`.
 2. Unpack those bytes to `DIM` bits, **MSB-first within each byte**: bit `8*i + k` of the
    vector = bit `(7-k)` of byte `i`.
 
@@ -31,6 +29,14 @@ algorithm is pure bitwise Hyperdimensional Computing (HDC/VSA) — no model, no 
 - Recall = nearest stored vector by Hamming (ties broken by recency, weight 0.05).
 
 ## Conformance vector
-`encode("nito")` must be identical across implementations. A conformance fixture
-(`tests/holo_fixture.json`: text → hex vector) can be generated from the reference and
-checked by any port.
+`encode("nito")` must be identical across implementations. The fixture
+(`tests/holo_fixture.json`: text → hex vector) is generated from the Python reference;
+`native/holo.c` is a second, independent implementation that reproduces it byte-for-byte
+(`tests/test_native.py` checks this when a C compiler is present).
+
+## Cost (honest)
+Encoding is `O(len(text) · DIM)` — for a ~70-char message at DIM=8192 that is ~0.5M bit
+ops: ≈2.6 ms in Python/numpy and ≈2.3 ms in the (unoptimized, faithful) C reference. It is
+**not** sub-microsecond at this size; sub-ms needs a smaller DIM or short inputs. The point
+of the native reference is portability and a numpy-free, microcontroller-capable build, not
+raw speed at DIM=8192.
