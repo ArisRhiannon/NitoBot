@@ -29,6 +29,7 @@ DEFAULTS = {
     "gossip_host": "127.0.0.1",   # bind loopback by default; expose via TLS proxy/Cloudflare tunnel
     "gossip_port": 8787,
     "network_secret": "",   # set the same value on your bots for a private, authenticated federation
+    "automod": {"mode": "SHADOW"},   # opt-in: add "automod" to modules; needs goodfaith
     "llm": {"enabled": False, "base_url": "", "api_key_env": "NITOBOT_LLM_KEY", "model": ""},
 }
 

@@ -58,7 +58,7 @@ Enable/disable in `data/config.json` → `modules`.
 | `wallet` | `/balance` `/pay` `/leaderboard` | ✓ |
 | `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
 | `admin` | moderation, best-practice rate limits | planned |
-| `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith) | planned |
+| `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith); starts in SHADOW | ✓ (opt-in) |
 | `llm` | OpenAI-compatible chat (persona + memory) | planned |
 | `voice` | voice-command bridge | planned |
 
