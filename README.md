@@ -59,7 +59,7 @@ Enable/disable in `data/config.json` → `modules`.
 | `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
 | `admin` | moderation, best-practice rate limits | planned |
 | `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith); starts in SHADOW | ✓ (opt-in) |
-| `llm` | OpenAI-compatible chat (persona + memory) | planned |
+| `llm` | `/ask` + replies on mention; OpenAI-compatible, persona + memory | ✓ (opt-in) |
 | `voice` | voice-command bridge | planned |
 
 Adding a cog: drop `cogs/yourcog.py` with a `setup(bot)`, add its name to `modules`.
@@ -93,15 +93,18 @@ Security, by default:
 ```bash
 python3 tests/test_economy.py   # message->Nitter economy, offline (5/5)
 python3 tests/test_gossip.py    # P2P gossip over real HTTP: convergence, auth, forgery (4/4)
+python3 tests/test_social.py    # social action counters (3/3)
+python3 tests/test_automod.py   # activity store + goodfaith decisions (2/2; needs goodfaith)
+python3 tests/test_llm.py       # memory recall + OpenAI-compatible client via mock server (3/3)
 ```
 
-Both run without Discord. Live Discord behavior needs a bot token.
+All run without Discord. Live Discord behavior needs a bot token.
 
 ## Roadmap
 
-v0.1 (this): core + installer + `meta`/`earn`/`wallet` + **federated gossip (secure by
-default)** + tested economy & P2P. Next: `social`, `admin`, `automod` (goodfaith),
-`llm` (+ persona + holographic memory), `voice`.
+Done: core + installer + **secure federated gossip** + `meta`/`earn`/`wallet`/`social`,
+plus opt-in `automod` (goodfaith) and `llm` (OpenAI-compatible + persona + memory).
+Next: `admin` (moderation with best-practice rate limits) and `voice` (voice-command bridge).
 
 ## License
 
