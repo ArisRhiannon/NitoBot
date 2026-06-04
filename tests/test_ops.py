@@ -47,10 +47,22 @@ def test_transcript_budget_and_bot_tagging():
     print("ok O3 transcript tags bots, keeps newest within budget")
 
 
+def test_enable_knowledge_optin():
+    import cli
+    cfg = {"modules": ["meta", "earn"], "irminsul": {"enabled": False}}
+    cli._enable_knowledge(cfg)
+    assert cfg["irminsul"]["enabled"] is True and "knowledge" in cfg["modules"]
+    cli._enable_knowledge(cfg)                       # idempotent
+    assert cfg["modules"].count("knowledge") == 1
+    assert "AGPL-3.0" in cli._AGPL_NOTICE            # the prompt tells users it's AGPL
+    print("ok O4 knowledge opt-in flips config + names the AGPL license")
+
+
 def run():
     test_update_fast_forwards_and_preserves_user_files()
     test_update_on_non_git_dir()
     test_transcript_budget_and_bot_tagging()
+    test_enable_knowledge_optin()
 
 
 if __name__ == "__main__":

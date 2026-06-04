@@ -6,6 +6,7 @@ memory) and .env are gitignored, so updates never touch your personal/soul setti
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 VERSION = "0.1.0"
@@ -30,13 +31,30 @@ def cmd_update(root: Path = ROOT) -> str:
     return base + " persona.md, data/ and settings were left untouched. Run 'nitobot run' to apply."
 
 
+def _enable_knowledge(cfg: dict) -> dict:
+    """Turn on the Irminsul knowledge feature in a config dict (pure, testable)."""
+    cfg.setdefault("irminsul", {})["enabled"] = True
+    mods = cfg.setdefault("modules", [])
+    if "knowledge" not in mods:
+        mods.append("knowledge")
+    return cfg
+
+
+_AGPL_NOTICE = (
+    "\nOptional feature — Irminsul knowledge + Akasha context (long-term memory that\n"
+    "consolidates what your server says and feeds it back into Nito's replies).\n"
+    "\n  ⚠ Irminsul is licensed AGPL-3.0. If you enable it, a build you distribute or run as a\n"
+    "    network service is governed by the AGPL for the combined work — you'd have to offer its\n"
+    "    source under the AGPL — unless you hold an Irminsul commercial license. NitoBot's own\n"
+    "    code stays MIT, and nothing AGPL is installed unless you say yes here.\n")
+
+
 def cmd_setup() -> str:
     import config
     config.DATA.mkdir(parents=True, exist_ok=True)
     config.ensure_persona()
     cfgp = config.DATA / "config.json"
-    if not cfgp.exists():
-        cfgp.write_text(json.dumps(config.DEFAULTS, indent=2), encoding="utf-8")
+    cfg = json.loads(cfgp.read_text(encoding="utf-8")) if cfgp.exists() else dict(config.DEFAULTS)
     envp = config.ROOT / ".env"
     if not envp.exists():
         try:
@@ -45,7 +63,27 @@ def cmd_setup() -> str:
             tok = ""
         if tok:
             envp.write_text(f"NITOBOT_TOKEN={tok}\n", encoding="utf-8")
-    return "Setup done. Edit data/config.json or persona.md to taste, then: nitobot run"
+    # Opt-in, AGPL-aware knowledge feature
+    print(_AGPL_NOTICE)
+    try:
+        ans = input("Enable the Irminsul knowledge feature (AGPL-3.0)? [y/N]: ").strip().lower()
+    except EOFError:
+        ans = ""
+    extra = ""
+    if ans in ("y", "yes", "s", "si", "sí"):
+        _enable_knowledge(cfg)
+        print("Installing irminsul (AGPL-3.0)…")
+        r = subprocess.run([sys.executable, "-m", "pip", "install",
+                            "irminsul @ git+https://github.com/ArisRhiannon/Irminsul.git"],
+                           capture_output=True, text=True)
+        extra = ("\nIrminsul enabled (AGPL-3.0). Your combined build is now AGPL-governed."
+                 if r.returncode == 0 else
+                 "\nEnabled in config, but auto-install failed — run:\n"
+                 "  pip install \"irminsul @ git+https://github.com/ArisRhiannon/Irminsul.git\"")
+    else:
+        print("Knowledge feature left disabled — NitoBot stays MIT-only.")
+    cfgp.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+    return "Setup done. Edit data/config.json or persona.md to taste, then: nitobot run" + extra
 
 
 def cmd_persona(args) -> str:

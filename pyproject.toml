@@ -15,10 +15,10 @@ dependencies = [
   "cryptography>=41,<46",
   "aiohttp>=3.8,<4",
   "numpy>=1.23",
-  "irminsul @ git+https://github.com/ArisRhiannon/Irminsul.git",
 ]
 
 [project.optional-dependencies]
+knowledge = ["irminsul @ git+https://github.com/ArisRhiannon/Irminsul.git"]  # AGPL-3.0 (see README License)
 automod = ["goodfaith @ git+https://github.com/ArisRhiannon/goodfaith.git"]
 voice = ["PyNaCl>=1.5,<2"]
 

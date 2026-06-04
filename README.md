@@ -87,7 +87,7 @@ Enable/disable in `data/config.json` → `modules`.
 | `wallet` | `/balance` `/pay` `/leaderboard` | ✓ |
 | `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
 | `admin` | `/kick` `/ban` `/timeout` `/purge` `/slowmode`; guards + rate limits | ✓ |
-| `knowledge` | **Irminsul** — consolidates what the server writes into a bounded knowledge tree; **Akasha** injects a context-sized knowledge card into Nito's replies | ✓ (default on) |
+| `knowledge` | **Irminsul** — consolidates what the server writes into a bounded knowledge tree; **Akasha** injects a context-sized knowledge card into Nito's replies | ✓ (opt-in, **AGPL**) |
 | `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith); starts in SHADOW | ✓ (opt-in) |
 | `llm` | **agentic** `/ask` + replies on mention; OpenAI-compatible tool-calling, persona + holographic memory | ✓ (opt-in) |
 | `voice` | `/join` `/leave` + transcript bridge (STT is external) | ✓ (opt-in) |
@@ -135,10 +135,12 @@ python3 tests/test_trace_mode.py   # single-call trace mode: reply + hardened ho
 python3 tests/test_knowledge.py    # Irminsul integration: remember -> grow -> Akasha card (3/3)
 ```
 
-## Knowledge — Irminsul + Akasha (on by default)
+## Knowledge — Irminsul + Akasha (opt-in)
 
-NitoBot ships with **[Irminsul](https://github.com/ArisRhiannon/Irminsul)**, a holographic
-knowledge engine, wired in by default (`irminsul.enabled`, the `knowledge` cog):
+NitoBot can use **[Irminsul](https://github.com/ArisRhiannon/Irminsul)**, a holographic knowledge
+engine. It's **opt-in** because Irminsul is **AGPL-3.0** (see License below). `nitobot setup` asks
+whether to enable it and states the AGPL implication before installing anything; you can also flip
+`irminsul.enabled` + add `knowledge` to `modules` by hand.
 
 - **Irminsul** consolidates what a server writes into a *bounded* tree of knowledge branches
   (episodic → semantic), deterministic and replayable, on the same HDC substrate as the memory.
@@ -148,7 +150,7 @@ knowledge engine, wired in by default (`irminsul.enabled`, the `knowledge` cog):
 
 Messages are remembered per guild and consolidated on a background loop (off the event loop);
 secrets / prompt-injection are never consolidated; `persona.md` is never touched, and a knowledge
-failure never breaks a reply. The card injection activates when the LLM is enabled.
+failure never breaks a reply. Nothing AGPL is installed unless you opt in.
 
 ## Agentic (OpenAI-compatible tool calling)
 
@@ -256,18 +258,19 @@ NitoBot's own code is **MIT** — © 2026 ArisRhiannon.
 
 ### Dependencies & licensing (read this)
 
-The default **`knowledge` feature depends on [Irminsul](https://github.com/ArisRhiannon/Irminsul),
-which is licensed AGPL-3.0-or-later** (with a separate commercial option). AGPL is strong
-copyleft, so this matters for how you ship NitoBot:
+NitoBot's default install is **MIT-clean**. The optional **`knowledge` feature depends on
+[Irminsul](https://github.com/ArisRhiannon/Irminsul), licensed AGPL-3.0-or-later** (with a separate
+commercial option). It is **off by default** and not a core dependency:
 
-- A build that **includes Irminsul** (the default) and is distributed or run as a network service
-  makes the **combined work subject to AGPL-3.0** — you must offer the corresponding source of the
-  whole under the AGPL — **unless you hold an Irminsul commercial license**. (The author of both
-  projects can deploy under either.)
-- To keep an **MIT-only build**, disable the feature and don't install Irminsul: set
-  `"irminsul": {"enabled": false}` in `data/config.json` **and** remove `knowledge` from
-  `modules`. The `knowledge` cog also disables itself automatically if `irminsul` isn't installed,
-  so no AGPL code is pulled in unless you choose to install it.
+- `nitobot setup` **asks** whether to enable knowledge and **states the AGPL implication** before
+  installing anything. Decline and NitoBot stays MIT-only; nothing AGPL is pulled in.
+- If you enable it, a build you **distribute or run as a network service makes the combined work
+  subject to AGPL-3.0** — you must offer the corresponding source of the whole under the AGPL —
+  **unless you hold an Irminsul commercial license**. (The author of both projects can deploy
+  under either.)
+- Install manually with the extra: `pip install ".[knowledge]"`, then set
+  `"irminsul": {"enabled": true}` and add `knowledge` to `modules`. The cog also disables itself
+  if `irminsul` isn't installed.
 
-In short: the MIT badge covers NitoBot's own code; the moment you ship it **with** Irminsul
-enabled, the combined distribution is governed by the AGPL. Pick the path that fits your use.
+In short: NitoBot's own code is MIT; the moment you opt into the knowledge feature, the combined
+distribution is governed by the AGPL.
