@@ -130,6 +130,7 @@ python3 tests/test_holo.py      # holographic HDC memory: portable, multilingual
 python3 tests/test_agent.py     # agent tool-calling loop + admin guardrails (3/3)
 python3 tests/test_native.py    # C reference reproduces identical vectors (conformance)
 python3 tests/test_holopersona.py  # bounded adaptive personality: trace/immunity/learning/drift-cap/consolidation/HDC (12/12)
+python3 tests/test_trace_mode.py   # single-call trace mode: reply + hardened holo_trace
 ```
 
 ## Agentic (OpenAI-compatible tool calling)
