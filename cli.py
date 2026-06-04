@@ -48,6 +48,46 @@ def cmd_setup() -> str:
     return "Setup done. Edit data/config.json or persona.md to taste, then: nitobot run"
 
 
+def cmd_persona(args) -> str:
+    """Inspect/manage HoloPersona — the bounded adaptive style layer (persona.md untouched)."""
+    import config
+    from holopersona import HoloPersona
+    config.DATA.mkdir(parents=True, exist_ok=True)
+    hp = HoloPersona(db_path=config.DATA / "holo.db", state_path=config.DATA / "holo_state.json")
+    a = args.action
+    if a == "freeze":
+        hp.freeze(True); return "HoloPersona frozen — style is pinned to the core persona."
+    if a == "unfreeze":
+        hp.freeze(False); return "HoloPersona unfrozen — adaptive layers active again."
+    if a == "status":
+        return (f"events: {hp.ledger.count()}   users: {len(hp.ledger.scopes())}   "
+                f"frozen: {hp.frozen}\ncore persona is immutable; learning is bounded + replayable.")
+    if a == "export":
+        return json.dumps(hp.export_json(), indent=2)
+    if a in ("explain", "drift", "replay", "reset") and not (args.user or args.guild):
+        if a == "reset":
+            return "reset needs --user <id> or --guild <id>."
+        if a in ("explain", "drift"):
+            return f"{a} needs --user <id>."
+    if a == "reset":
+        hp.reset(user_id=args.user, guild_id=args.guild)
+        return f"reset {'user '+args.user if args.user else 'guild '+args.guild} — events removed; replay now yields the core."
+    if a == "explain":
+        g = hp.explain(args.user)
+        lines = [f"Relationship style for {args.user}:", ""]
+        lines += [f"{t:<14}{m:>5.2f}  {lvl} confidence" for t, (m, lvl) in g.items()]
+        return "\n".join(lines)
+    if a == "drift":
+        rows = hp.drift(args.user)
+        if not rows:
+            return f"No evidenced drift for {args.user} yet (style == core)."
+        return "\n".join(f"{t:<14}{d:+.3f}  {flag}" for t, d, flag in rows)
+    if a == "replay":
+        n = hp.ledger.count()
+        return f"replayed {n} events deterministically; current_persona = replay(holo_events)."
+    return "unknown persona action"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="nitobot", description="NitoBot — a Discord bot you earn Nito in.")
     sub = ap.add_subparsers(dest="cmd")
@@ -55,6 +95,11 @@ def main(argv=None):
     sub.add_parser("update", help="update the code (keeps your persona, data and settings)")
     sub.add_parser("setup", help="create config + persona + token")
     sub.add_parser("version", help="print version")
+    pp = sub.add_parser("persona", help="inspect/manage the adaptive style layer (HoloPersona)")
+    pp.add_argument("action", choices=["status", "explain", "drift", "freeze", "unfreeze",
+                                       "reset", "export", "replay"])
+    pp.add_argument("--user")
+    pp.add_argument("--guild")
     args = ap.parse_args(argv)
     if args.cmd == "run":
         import config
@@ -67,6 +112,8 @@ def main(argv=None):
         print(cmd_setup())
     elif args.cmd == "version":
         print("nitobot", VERSION)
+    elif args.cmd == "persona":
+        print(cmd_persona(args))
     else:
         ap.print_help()
 

@@ -36,6 +36,8 @@ nitobot setup     # creates data/config.json, persona.md, asks for your token
 nitobot run       # start the bot
 nitobot update    # pull the latest code (see below)
 nitobot version
+nitobot persona status            # inspect the adaptive style layer (HoloPersona)
+nitobot persona explain --user <id>
 ```
 
 ## Updating — `nitobot update`
@@ -127,6 +129,7 @@ python3 tests/test_admin_voice.py  # rate limiter + moderation guard + voice par
 python3 tests/test_holo.py      # holographic HDC memory: portable, multilingual, cheap (6/6)
 python3 tests/test_agent.py     # agent tool-calling loop + admin guardrails (3/3)
 python3 tests/test_native.py    # C reference reproduces identical vectors (conformance)
+python3 tests/test_holopersona.py  # bounded adaptive personality: trace/immunity/learning/drift (8/8)
 ```
 
 ## Agentic (OpenAI-compatible tool calling)
@@ -147,6 +150,55 @@ OpenAI-compatible endpoint (OpenAI, Ollama, llama.cpp, LM Studio). See `agent.py
 ```text
 model -> tool_calls -> dispatch (guarded) -> tool results -> final reply   (max 4 steps)
 ```
+
+## HoloPersona — bounded adaptive personality
+
+> **Stable at the core. Adaptive at the edges.**
+
+HoloPersona is NitoBot's bounded adaptive personality layer. It stores replayable evidence
+from interactions and consolidates **stable** patterns into style preferences, while preserving
+an **immutable core persona** from `persona.md`. It is not a soul and does not "truly understand"
+anyone — it's a small, auditable system for learning conversational *style*.
+
+Four separate layers (the plan's thesis):
+
+| Layer | Question | Speed |
+|---|---|---|
+| **Core persona** (`persona.md`) | who Nito *is* | never changes automatically |
+| **HoloPersona** | *how* Nito should respond | slow, consolidated |
+| **HoloMood** | this conversation's tilt | fast, decays ~0.85 / 10 min |
+| HoloMemory | what Nito knows | (the HDC memory above) |
+
+How it works, and why it's safe:
+
+- **The model proposes, the deterministic engine decides.** Every reply can carry a compact
+  `holo_trace`, but it's weak evidence (weight 0.25). Trusted signals are the cheap, LLM-free
+  ones extracted from your own words (e.g. "sin emojis", "más corto", "explica más" — weight 0.70).
+- **Evidence-weighted beliefs.** A trait's learning rate shrinks as evidence accumulates
+  (`lr = base·confidence·reward / √(1+evidence)`), so one message can't overwrite a personality,
+  but a repeated, explicit preference does consolidate.
+- **Identity bounds.** Every learned style is *projected into* hard bounds (e.g. `emoji ≤ 0.10`),
+  so adaptation can never push Nito out of character. `persona.md` is never rewritten.
+- **HoloImmunity.** Prompt injection, abuse, secrets and "rewrite your persona" attempts are
+  detected and learned with weight **0**. Silence is neutral, never punishment.
+- **Replayable + auditable.** Everything lives in a `holo_events` ledger; `current_persona =
+  replay(events)`. Inspect, freeze, reset or export it from the CLI:
+
+```bash
+nitobot persona status
+nitobot persona explain --user <id>     # per-user learned style + confidence
+nitobot persona drift   --user <id>     # how far from core, flags traits over the cap
+nitobot persona freeze                  # pin style to the core persona
+nitobot persona reset   --user <id>     # wipe a user's learned style
+nitobot persona export                  # dump the event ledger
+```
+
+**Status (honest):** implemented and tested offline are the trace parser/validator, HoloImmunity,
+deterministic signals, evidence-weighted per-user learning, session mood, identity bounds, the
+replayable ledger and the CLI (`tests/test_holopersona.py`, 8/8). **Not done yet:** F3 periodic
+consolidation/clustering and *enforcing* the drift cap (it's currently reported, not capped),
+F4 full HDC event-vector binding, and wiring HoloPersona into the live LLM cog (style-card
+injection + event recording). It runs in **shadow mode** — it does not yet change live replies.
 
 ## Holographic memory
 

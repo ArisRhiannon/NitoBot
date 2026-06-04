@@ -30,4 +30,4 @@ py-modules = ["bot", "cli", "config", "economy", "earn", "nito", "peers", "memor
               "llm", "social_store", "activity_store"]
 
 [tool.setuptools.packages.find]
-include = ["cogs*"]
+include = ["cogs*", "holopersona*"]
