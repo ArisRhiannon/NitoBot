@@ -9,16 +9,14 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 
-from knowledge import Knowledge
-
 _MIN_LEN = 8                # ignore trivial messages
 _GROW_MINUTES = 30
 
 
 class KnowledgeCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, knowledge):
         self.bot = bot
-        self.k = Knowledge(bot.cfg)
+        self.k = knowledge
         bot.knowledge = self.k                 # the LLM cog reads this if present
         self._active = set()
         self.grow_loop.start()
@@ -57,4 +55,10 @@ class KnowledgeCog(commands.Cog):
 async def setup(bot):
     if not bot.cfg.get("irminsul", {}).get("enabled", True):
         return
-    await bot.add_cog(KnowledgeCog(bot))
+    try:
+        from knowledge import Knowledge          # pulls in irminsul (AGPL-3.0)
+    except ImportError:
+        print("knowledge cog: irminsul not installed — knowledge/Akasha disabled. "
+              "Install `irminsul` (AGPL-3.0) to enable it.")
+        return
+    await bot.add_cog(KnowledgeCog(bot, Knowledge(bot.cfg)))

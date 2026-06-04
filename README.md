@@ -252,4 +252,22 @@ backends, and bundled voice STT — all on top of the tested cores here.
 
 ## License
 
-MIT — © 2026 ArisRhiannon
+NitoBot's own code is **MIT** — © 2026 ArisRhiannon.
+
+### Dependencies & licensing (read this)
+
+The default **`knowledge` feature depends on [Irminsul](https://github.com/ArisRhiannon/Irminsul),
+which is licensed AGPL-3.0-or-later** (with a separate commercial option). AGPL is strong
+copyleft, so this matters for how you ship NitoBot:
+
+- A build that **includes Irminsul** (the default) and is distributed or run as a network service
+  makes the **combined work subject to AGPL-3.0** — you must offer the corresponding source of the
+  whole under the AGPL — **unless you hold an Irminsul commercial license**. (The author of both
+  projects can deploy under either.)
+- To keep an **MIT-only build**, disable the feature and don't install Irminsul: set
+  `"irminsul": {"enabled": false}` in `data/config.json` **and** remove `knowledge` from
+  `modules`. The `knowledge` cog also disables itself automatically if `irminsul` isn't installed,
+  so no AGPL code is pulled in unless you choose to install it.
+
+In short: the MIT badge covers NitoBot's own code; the moment you ship it **with** Irminsul
+enabled, the combined distribution is governed by the AGPL. Pick the path that fits your use.
