@@ -4,3 +4,4 @@ aiohttp>=3.8,<4
 goodfaith @ git+https://github.com/ArisRhiannon/goodfaith.git  # optional: enables the automod cog
 PyNaCl>=1.5,<2  # optional: enables the voice cog (join/leave)
 numpy>=1.23  # holographic (HDC) memory backend
+irminsul @ git+https://github.com/ArisRhiannon/Irminsul.git  # holographic knowledge + Akasha context

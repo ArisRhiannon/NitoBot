@@ -5,6 +5,7 @@ She replies on @mention or /ask, with persona (persona.md) + holographic memory,
 for anyone, and perform moderation (timeout/purge/slowmode) ONLY when an admin asks — every
 admin tool is gated both in agent.dispatch and by Discord permission/hierarchy guards here.
 Opt-in: registers only when llm.enabled + base_url are set."""
+import asyncio
 import datetime
 import os
 
@@ -108,11 +109,22 @@ class LLM(commands.Cog):
                 style = "\n\n" + self.holo.style_for(requester.id, guild.id, channel.id, context=text)
             except Exception:
                 style = ""
+        knowledge = ""
+        kb = getattr(self.bot, "knowledge", None)
+        if kb is not None:
+            try:                                              # Akasha knowledge card (off-loop, never raises)
+                used = (len(self.persona) + len(transcript) + sum(len(h["content"]) for h in
+                        self.history.get(channel.id, [])) + 800) // 4
+                card = await asyncio.get_event_loop().run_in_executor(
+                    None, kb.card, text, kb.scope_for(guild.id), used)
+                knowledge = "\n\n" + card if card else ""
+            except Exception:
+                knowledge = ""
         sys_extra = (f"{self.persona}\nYou are in a Discord server. Requester is "
                      f"{'an admin' if self._context(guild, channel, requester).is_admin else 'a regular member'}. "
                      f"Members in scope (name=id): {roster}. Use tools when useful; never claim to have "
-                     f"acted unless a tool confirmed it.{style}\n\nRecent channel conversation (oldest to "
-                     f"newest, includes bots):\n{transcript}")
+                     f"acted unless a tool confirmed it.{style}{knowledge}\n\nRecent channel conversation "
+                     f"(oldest to newest, includes bots):\n{transcript}")
         hist = self.history.get(channel.id, [])[-6:]
         messages = build_messages(sys_extra, self.mem.recall(scope, text, k=3), hist, text)
         htrace = None

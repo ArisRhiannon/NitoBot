@@ -87,6 +87,7 @@ Enable/disable in `data/config.json` → `modules`.
 | `wallet` | `/balance` `/pay` `/leaderboard` | ✓ |
 | `social` | `/hug` `/pat` `/kiss` `/affection` + counters | ✓ |
 | `admin` | `/kick` `/ban` `/timeout` `/purge` `/slowmode`; guards + rate limits | ✓ |
+| `knowledge` | **Irminsul** — consolidates what the server writes into a bounded knowledge tree; **Akasha** injects a context-sized knowledge card into Nito's replies | ✓ (default on) |
 | `automod` | integrates [goodfaith](https://github.com/ArisRhiannon/goodfaith); starts in SHADOW | ✓ (opt-in) |
 | `llm` | **agentic** `/ask` + replies on mention; OpenAI-compatible tool-calling, persona + holographic memory | ✓ (opt-in) |
 | `voice` | `/join` `/leave` + transcript bridge (STT is external) | ✓ (opt-in) |
@@ -131,7 +132,23 @@ python3 tests/test_agent.py     # agent tool-calling loop + admin guardrails (3/
 python3 tests/test_native.py    # C reference reproduces identical vectors (conformance)
 python3 tests/test_holopersona.py  # bounded adaptive personality: trace/immunity/learning/drift-cap/consolidation/HDC (12/12)
 python3 tests/test_trace_mode.py   # single-call trace mode: reply + hardened holo_trace
+python3 tests/test_knowledge.py    # Irminsul integration: remember -> grow -> Akasha card (3/3)
 ```
+
+## Knowledge — Irminsul + Akasha (on by default)
+
+NitoBot ships with **[Irminsul](https://github.com/ArisRhiannon/Irminsul)**, a holographic
+knowledge engine, wired in by default (`irminsul.enabled`, the `knowledge` cog):
+
+- **Irminsul** consolidates what a server writes into a *bounded* tree of knowledge branches
+  (episodic → semantic), deterministic and replayable, on the same HDC substrate as the memory.
+- **Akasha** injects a **context-sized** knowledge card into Nito's prompt — sized as an adaptive
+  share of the active model's free context, split into *foreground* (citable facts) and *ambient*
+  (soft context that may shape tone without being quoted).
+
+Messages are remembered per guild and consolidated on a background loop (off the event loop);
+secrets / prompt-injection are never consolidated; `persona.md` is never touched, and a knowledge
+failure never breaks a reply. The card injection activates when the LLM is enabled.
 
 ## Agentic (OpenAI-compatible tool calling)
 

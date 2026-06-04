@@ -15,12 +15,14 @@ DEFAULTS = {
     "quorum": 2,
     "epoch_seconds": 600,
     "history_limit": 300,        # how many recent channel messages the agent reads as context
-    "modules": ["meta", "earn", "wallet", "social", "admin"],
+    "modules": ["meta", "earn", "wallet", "social", "admin", "knowledge"],
     "peers": [],
     "gossip_host": "127.0.0.1",
     "gossip_port": 8787,
     "network_secret": "",
     "holopersona": {"enabled": True, "trace": False},
+    "irminsul": {"enabled": True, "base_pct": 0.15, "min_tokens": 256, "max_tokens": 2048,
+                 "context_window": 8192, "ambient_on_small_ctx": False},
     "llm": {"enabled": False, "base_url": "", "api_key_env": "NITOBOT_LLM_KEY", "model": ""},
 }
 

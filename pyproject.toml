@@ -15,6 +15,7 @@ dependencies = [
   "cryptography>=41,<46",
   "aiohttp>=3.8,<4",
   "numpy>=1.23",
+  "irminsul @ git+https://github.com/ArisRhiannon/Irminsul.git",
 ]
 
 [project.optional-dependencies]
@@ -27,7 +28,7 @@ nitobot = "cli:main"
 [tool.setuptools]
 py-modules = ["bot", "cli", "config", "economy", "earn", "nito", "peers", "memory",
               "modutil", "voice_core", "automod_core", "agent", "context", "install",
-              "llm", "social_store", "activity_store"]
+              "llm", "social_store", "activity_store", "knowledge"]
 
 [tool.setuptools.packages.find]
 include = ["cogs*", "holopersona*"]
