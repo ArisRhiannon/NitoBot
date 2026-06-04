@@ -77,6 +77,22 @@ class Ledger:
     def count(self):
         return self.db.execute("SELECT COUNT(*) FROM holo_events").fetchone()[0]
 
+    def save_snapshot(self, scope, state, stats, now=None):
+        self.db.execute(
+            "INSERT INTO holo_snapshots(ts,scope,state,stats,version) VALUES(?,?,?,?,?)",
+            (time.time() if now is None else now, str(scope), json.dumps(state),
+             json.dumps(stats), VERSION))
+        self.db.commit()
+
+    def snapshot_count(self):
+        return self.db.execute("SELECT COUNT(*) FROM holo_snapshots").fetchone()[0]
+
+    def latest_snapshot(self, scope):
+        row = self.db.execute(
+            "SELECT state,stats,ts FROM holo_snapshots WHERE scope=? ORDER BY id DESC LIMIT 1",
+            (str(scope),)).fetchone()
+        return None if row is None else {"state": json.loads(row[0]), "stats": json.loads(row[1]), "ts": row[2]}
+
     def scopes(self):
         return [r[0] for r in self.db.execute(
             "SELECT DISTINCT user_id FROM holo_events ORDER BY user_id").fetchall()]

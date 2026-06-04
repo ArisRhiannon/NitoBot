@@ -61,7 +61,18 @@ def cmd_persona(args) -> str:
         hp.freeze(False); return "HoloPersona unfrozen — adaptive layers active again."
     if a == "status":
         return (f"events: {hp.ledger.count()}   users: {len(hp.ledger.scopes())}   "
-                f"frozen: {hp.frozen}\ncore persona is immutable; learning is bounded + replayable.")
+                f"snapshots: {hp.ledger.snapshot_count()}   frozen: {hp.frozen}   cap: ±{hp.cap}\n"
+                f"core persona is immutable; learning is bounded (±cap) + replayable.")
+    if a == "consolidate":
+        rep = hp.consolidate()
+        if not rep:
+            return "Nothing stable enough to promote yet."
+        out = []
+        for uid, promoted in rep.items():
+            out.append(f"Promoted for {uid}:")
+            out += [f"  {t} {d:+.3f}" for t, d in promoted]
+        out.append(f"\nSnapshots saved: {len(rep)}.")
+        return "\n".join(out)
     if a == "export":
         return json.dumps(hp.export_json(), indent=2)
     if a in ("explain", "drift", "replay", "reset") and not (args.user or args.guild):
@@ -97,7 +108,7 @@ def main(argv=None):
     sub.add_parser("version", help="print version")
     pp = sub.add_parser("persona", help="inspect/manage the adaptive style layer (HoloPersona)")
     pp.add_argument("action", choices=["status", "explain", "drift", "freeze", "unfreeze",
-                                       "reset", "export", "replay"])
+                                       "reset", "export", "replay", "consolidate"])
     pp.add_argument("--user")
     pp.add_argument("--guild")
     args = ap.parse_args(argv)

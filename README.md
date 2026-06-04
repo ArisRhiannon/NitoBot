@@ -129,7 +129,7 @@ python3 tests/test_admin_voice.py  # rate limiter + moderation guard + voice par
 python3 tests/test_holo.py      # holographic HDC memory: portable, multilingual, cheap (6/6)
 python3 tests/test_agent.py     # agent tool-calling loop + admin guardrails (3/3)
 python3 tests/test_native.py    # C reference reproduces identical vectors (conformance)
-python3 tests/test_holopersona.py  # bounded adaptive personality: trace/immunity/learning/drift + live style-card (9/9)
+python3 tests/test_holopersona.py  # bounded adaptive personality: trace/immunity/learning/drift-cap/consolidation (11/11)
 ```
 
 ## Agentic (OpenAI-compatible tool calling)
@@ -188,20 +188,22 @@ How it works, and why it's safe:
 nitobot persona status
 nitobot persona explain --user <id>     # per-user learned style + confidence
 nitobot persona drift   --user <id>     # how far from core, flags traits over the cap
+nitobot persona consolidate             # promote stable shifts, write an auditable snapshot
 nitobot persona freeze                  # pin style to the core persona
 nitobot persona reset   --user <id>     # wipe a user's learned style
 nitobot persona export                  # dump the event ledger
 ```
 
-**Status (honest):** implemented and tested offline are the trace parser/validator, HoloImmunity,
-deterministic signals, evidence-weighted per-user learning, session mood, identity bounds, the
-replayable ledger and the CLI (`tests/test_holopersona.py`, 9/9). It is **wired into the LLM cog**
-(opt-in via `holopersona.enabled`, default on when the LLM is enabled): the per-user style card is
-injected into the prompt and every turn is recorded as bounded evidence — `persona.md` is never
-touched and a failure here never breaks a reply. **Not done yet:** learning currently comes from the
-deterministic text signals only (the LLM `holo_trace` JSON path isn't wired, since the cog uses
-tool-calling); F3 periodic consolidation/clustering and *enforcing* the drift cap (it's reported,
-not capped); and F4 full HDC event-vector binding.
+**Status (honest):** implemented and tested offline (`tests/test_holopersona.py`, **11/11**) are the
+trace parser/validator, HoloImmunity, deterministic signals, evidence-weighted per-user learning,
+session mood, identity bounds, an **enforced** drift cap (a learned trait can move at most ±0.35
+from the core — clamped, not just reported), periodic consolidation with auditable snapshots, the
+replayable ledger and the CLI. It is **wired into the LLM cog** (opt-in via `holopersona.enabled`,
+default on with the LLM): the per-user, drift-capped style card is injected into the prompt and
+every turn is recorded as bounded evidence — `persona.md` is never touched and a failure here never
+breaks a reply. **Not done yet:** learning comes from the deterministic text signals only (the LLM
+`holo_trace` JSON path isn't wired, since the cog uses tool-calling), and F4 full HDC event-vector
+binding (the ledger currently replays signals + trace, not bound hypervectors).
 
 ## Holographic memory
 

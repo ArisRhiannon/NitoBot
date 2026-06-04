@@ -126,12 +126,38 @@ def test_learning_changes_the_style_card():
     print("ok H9 learned preferences visibly change the active style card")
 
 
+def test_drift_cap_is_enforced_not_just_reported():
+    hp = HoloPersona(db_path=":memory:", cap=0.35)
+    for i in range(30):
+        hp.record(user_id="d", text="explica más, piensa más", reply="ok", now=1000.0 + i)
+    raw = dict(((t, m) for t, (m, _l) in hp.explain("d").items()))["depth"]
+    used = hp.relationship_means("d")["depth"]                  # what actually influences replies
+    assert raw > used                                            # raw belief ran past the cap
+    assert used <= hp.core["depth"] + hp.cap + 1e-9              # influence is clamped to ±cap
+    print("ok H10 drift cap is enforced on influence, not just reported")
+
+
+def test_consolidation_promotes_stable_and_snapshots():
+    hp = HoloPersona(db_path=":memory:")
+    for i in range(8):
+        hp.record(user_id="a", text="sin emojis", reply="ok", now=1000.0 + i)
+    hp.record(user_id="b", text="hola", reply="hi", now=2000.0)   # quiet user, no signal
+    rep = hp.consolidate()
+    assert "a" in rep and any(t == "emoji" for t, _ in rep["a"])
+    assert "b" not in rep                                         # nothing stable to promote
+    assert hp.ledger.snapshot_count() >= 1
+    assert hp.ledger.latest_snapshot("a")["stats"]["promoted"]
+    print("ok H11 consolidation promotes stable shifts and writes an auditable snapshot")
+
+
 def run():
     for fn in [test_trace_valid_clamps_and_filters, test_trace_invalid_json_still_gives_reply,
                test_trace_blocks_unsafe_memory_candidates, test_session_mood_decays,
                test_repeated_explicit_pref_consolidates_weak_does_not,
                test_silence_and_reset_and_replay_determinism, test_immunity_predicates,
-               test_bounds_clamp_and_freeze_pins_to_core, test_learning_changes_the_style_card]:
+               test_bounds_clamp_and_freeze_pins_to_core, test_learning_changes_the_style_card,
+               test_drift_cap_is_enforced_not_just_reported,
+               test_consolidation_promotes_stable_and_snapshots]:
         fn()
 
 
