@@ -1,0 +1,10 @@
+discord.py<3,>=2.3
+cryptography<46,>=41
+aiohttp<4,>=3.8
+numpy>=1.23
+
+[automod]
+goodfaith @ git+https://github.com/ArisRhiannon/goodfaith.git
+
+[voice]
+PyNaCl<2,>=1.5

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nitobot"
+version = "0.1.0"
+description = "A modular, agentic Discord bot on the NitoChain — earn Nito by writing."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "ArisRhiannon" }]
+dependencies = [
+  "discord.py>=2.3,<3",
+  "cryptography>=41,<46",
+  "aiohttp>=3.8,<4",
+  "numpy>=1.23",
+]
+
+[project.optional-dependencies]
+automod = ["goodfaith @ git+https://github.com/ArisRhiannon/goodfaith.git"]
+voice = ["PyNaCl>=1.5,<2"]
+
+[project.scripts]
+nitobot = "cli:main"
+
+[tool.setuptools]
+py-modules = ["bot", "cli", "config", "economy", "earn", "nito", "peers", "memory",
+              "modutil", "voice_core", "automod_core", "agent", "context", "install"]
+
+[tool.setuptools.packages.find]
+include = ["cogs*"]

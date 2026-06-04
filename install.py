@@ -44,7 +44,7 @@ def main():
         except EOFError:
             pass
         cfg.write_text(json.dumps({
-            "quorum": 2, "epoch_seconds": 600,
+            "quorum": 2, "epoch_seconds": 600, "history_limit": 300,
             "modules": ["meta", "earn", "wallet", "social", "admin"], "peers": peers,
             "gossip_host": "127.0.0.1", "gossip_port": 8787, "network_secret": secret,
             "llm": {"enabled": False, "base_url": "", "api_key_env": "NITOBOT_LLM_KEY", "model": ""},

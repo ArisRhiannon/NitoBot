@@ -1,0 +1,2 @@
+[console_scripts]
+nitobot = cli:main

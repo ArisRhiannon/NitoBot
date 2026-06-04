@@ -7,26 +7,26 @@ admin tool is gated both in agent.dispatch and by Discord permission/hierarchy g
 Opt-in: registers only when llm.enabled + base_url are set."""
 import datetime
 import os
-from pathlib import Path
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
+import config
 from agent import run_agent, ToolContext
 from config import DATA
+from context import build_transcript
 from llm import LLMClient, build_messages
 from memory import MemoryStore
 from modutil import can_moderate
 from nito import nito_str
 
-_PERSONA_FALLBACK = "You are Nito: quiet, polite, brief. No emojis. Be honest and kind."
 _MOD_PERMS = ("moderate_members", "kick_members", "ban_members", "manage_messages")
 
 
 def _persona() -> str:
-    p = Path("persona.md")
-    return p.read_text(encoding="utf-8") if p.exists() else _PERSONA_FALLBACK
+    p = config.ensure_persona()
+    return p.read_text(encoding="utf-8") if p.exists() else "You are Nito: quiet, polite, brief. No emojis."
 
 
 class LLM(commands.Cog):
@@ -86,13 +86,23 @@ class LLM(commands.Cog):
             "get_balance": get_balance, "leaderboard": leaderboard, "recall_memory": recall_memory,
             "timeout_member": timeout_member, "purge_messages": purge_messages, "set_slowmode": set_slowmode})
 
+    async def _fetch_transcript(self, channel) -> str:
+        limit = self.bot.cfg.get("history_limit", 300)
+        msgs = []
+        async for m in channel.history(limit=limit):          # includes bots and Nito herself
+            msgs.append((m.author.display_name, m.content, m.author.bot))
+        msgs.reverse()                                         # oldest -> newest
+        return build_transcript(msgs)
+
     async def _respond(self, guild, channel, requester, mentions, text: str) -> str:
         scope = f"{guild.id}:{requester.id}"
         roster = ", ".join(f"{m.display_name}={m.id}" for m in ([requester] + list(mentions)))
+        transcript = await self._fetch_transcript(channel)
         sys_extra = (f"{self.persona}\nYou are in a Discord server. Requester is "
                      f"{'an admin' if self._context(guild, channel, requester).is_admin else 'a regular member'}. "
                      f"Members in scope (name=id): {roster}. Use tools when useful; never claim to have "
-                     f"acted unless a tool confirmed it.")
+                     f"acted unless a tool confirmed it.\n\nRecent channel conversation (oldest to newest, "
+                     f"includes bots):\n{transcript}")
         hist = self.history.get(channel.id, [])[-6:]
         messages = build_messages(sys_extra, self.mem.recall(scope, text, k=3), hist, text)
         reply = await run_agent(self.client, messages, self._context(guild, channel, requester))

@@ -1,0 +1,15 @@
+agent
+automod_core
+bot
+cli
+cogs
+config
+context
+earn
+economy
+install
+memory
+modutil
+nito
+peers
+voice_core

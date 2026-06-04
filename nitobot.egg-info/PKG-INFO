@@ -1,3 +1,22 @@
+Metadata-Version: 2.4
+Name: nitobot
+Version: 0.1.0
+Summary: A modular, agentic Discord bot on the NitoChain — earn Nito by writing.
+Author: ArisRhiannon
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: discord.py<3,>=2.3
+Requires-Dist: cryptography<46,>=41
+Requires-Dist: aiohttp<4,>=3.8
+Requires-Dist: numpy>=1.23
+Provides-Extra: automod
+Requires-Dist: goodfaith @ git+https://github.com/ArisRhiannon/goodfaith.git ; extra == "automod"
+Provides-Extra: voice
+Requires-Dist: PyNaCl<2,>=1.5; extra == "voice"
+Dynamic: license-file
+
 # NitoBot
 
 <p align="left">
@@ -25,33 +44,6 @@ validator identity, and asks for your Discord token. Then:
 ```bash
 .venv/bin/python bot.py   # NITOBOT_TOKEN in .env or env
 ```
-
-## As a terminal CLI
-
-NitoBot is also a pip-installable package with a `nitobot` command:
-
-```bash
-pipx install git+https://github.com/ArisRhiannon/NitoBot     # or: pip install -e .
-nitobot setup     # creates data/config.json, persona.md, asks for your token
-nitobot run       # start the bot
-nitobot update    # pull the latest code (see below)
-nitobot version
-```
-
-## Updating — `nitobot update`
-
-`nitobot update` fast-forwards the code from git. **It never touches your settings**: your
-`persona.md` (Nito's soul), everything in `data/` (config, wallet key, memory) and `.env`
-are gitignored, so an update only changes code. The tracked template is `persona.default.md`;
-your `persona.md` is created from it once and then left alone. If you've edited tracked files
-or the branch diverged, the update refuses to clobber them and tells you to resolve it in git.
-
-## Reading the conversation
-
-When Nito replies, she reads the channel's recent history — up to `history_limit` messages
-(default **300**, set in `data/config.json`) — and includes it as context, **including
-messages from bots and from herself**, so she follows the actual conversation rather than
-just the line that pinged her.
 
 ## How earning works (and why a fork can't cheat)
 
