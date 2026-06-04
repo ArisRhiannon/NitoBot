@@ -12,7 +12,7 @@ from .genome import StyleGenome, TraitBelief, update_trait
 from .ledger import Ledger, replay_user
 from .mood import SessionMood
 from .trace import parse_response, validate_trace
-from . import immunity, signals, card
+from . import immunity, signals, card, holo_hdc
 
 __all__ = [
     "HoloPersona", "StyleGenome", "TraitBelief", "update_trait", "Ledger", "replay_user",

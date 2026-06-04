@@ -68,9 +68,9 @@ def cmd_persona(args) -> str:
         if not rep:
             return "Nothing stable enough to promote yet."
         out = []
-        for uid, promoted in rep.items():
-            out.append(f"Promoted for {uid}:")
-            out += [f"  {t} {d:+.3f}" for t, d in promoted]
+        for uid, st in rep.items():
+            out.append(f"Promoted for {uid} (HDC consistency {st['consistency']}):")
+            out += [f"  {t} {d:+.3f}" for t, d in st["promoted"]]
         out.append(f"\nSnapshots saved: {len(rep)}.")
         return "\n".join(out)
     if a == "export":

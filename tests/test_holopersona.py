@@ -143,11 +143,30 @@ def test_consolidation_promotes_stable_and_snapshots():
         hp.record(user_id="a", text="sin emojis", reply="ok", now=1000.0 + i)
     hp.record(user_id="b", text="hola", reply="hi", now=2000.0)   # quiet user, no signal
     rep = hp.consolidate()
-    assert "a" in rep and any(t == "emoji" for t, _ in rep["a"])
+    assert "a" in rep and any(t == "emoji" for t, _ in rep["a"]["promoted"])
     assert "b" not in rep                                         # nothing stable to promote
     assert hp.ledger.snapshot_count() >= 1
     assert hp.ledger.latest_snapshot("a")["stats"]["promoted"]
+    assert 0.0 <= rep["a"]["consistency"] <= 1.0
     print("ok H11 consolidation promotes stable shifts and writes an auditable snapshot")
+
+
+def test_hdc_event_layer():
+    from holopersona import holo_hdc as h
+    a, b = h.symbol("user_text"), h.encode_bits("sin emojis")
+    bound = h.bind(a, b)
+    assert (h.bind(bound, a) == b).all()                          # XOR binding is self-inverse
+    e1 = h.encode_event("sin emojis", outcome="positive", ts=0.0)
+    e2 = h.encode_event("sin emojis", outcome="positive", ts=0.0)
+    assert (e1 == e2).all()                                       # deterministic
+    # a bound role is recoverable above chance from the bundled event vector
+    rec = h.bind(e1, h.symbol("outcome"))
+    assert h.similarity(rec, h.symbol("outcome:positive")) > h.similarity(rec, h.symbol("outcome:negative"))
+    # identical events cluster tightly; unrelated ones sit near noise
+    same = h.consistency([e1, e2])
+    diff = h.consistency([h.encode_event("hola", ts=0.0), h.encode_event("totally different text", ts=99999.0)])
+    assert same > 0.95 and diff < same
+    print("ok H12 HDC role-binding recovers fillers; consistency reflects clustering")
 
 
 def run():
@@ -157,7 +176,7 @@ def run():
                test_silence_and_reset_and_replay_determinism, test_immunity_predicates,
                test_bounds_clamp_and_freeze_pins_to_core, test_learning_changes_the_style_card,
                test_drift_cap_is_enforced_not_just_reported,
-               test_consolidation_promotes_stable_and_snapshots]:
+               test_consolidation_promotes_stable_and_snapshots, test_hdc_event_layer]:
         fn()
 
 

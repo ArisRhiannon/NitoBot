@@ -115,14 +115,19 @@ class LLM(commands.Cog):
                      f"newest, includes bots):\n{transcript}")
         hist = self.history.get(channel.id, [])[-6:]
         messages = build_messages(sys_extra, self.mem.recall(scope, text, k=3), hist, text)
-        reply = await run_agent(self.client, messages, self._context(guild, channel, requester))
+        htrace = None
+        if self.holo is not None and self.bot.cfg.get("holopersona", {}).get("trace"):
+            from holopersona.respond import respond_with_trace   # single call: reply + holo_trace
+            reply, htrace = await respond_with_trace(self.client, messages)
+        else:
+            reply = await run_agent(self.client, messages, self._context(guild, channel, requester))
         turns = self.history.setdefault(channel.id, [])
         turns += [{"role": "user", "content": text}, {"role": "assistant", "content": reply}]
         self.history[channel.id] = turns[-12:]
         self.mem.remember(scope, f"{text} -> {reply}")
         if self.holo is not None:
             try:                                              # bounded learning; never breaks a reply
-                self.holo.record(user_id=requester.id, text=text, reply=reply,
+                self.holo.record(user_id=requester.id, text=text, reply=reply, trace=htrace,
                                  guild_id=guild.id, channel_id=channel.id)
             except Exception:
                 pass

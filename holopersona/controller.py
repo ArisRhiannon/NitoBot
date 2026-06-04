@@ -76,19 +76,22 @@ class HoloPersona:
 
     def consolidate(self, min_evidence=1.0, promote_delta=0.04, now=None):
         """Periodic pass: promote stable, well-evidenced (capped) shifts to a snapshot and
-        return an auditable report {user_id: [(trait, capped_delta), ...]}."""
+        return an auditable report {user_id: {"promoted": [(trait, delta)], "consistency": x}}.
+        consistency is the HDC mean pairwise similarity of the user's event vectors (how
+        recurring their interactions are) — the plan's consistency factor, audited not hidden."""
+        from .holo_hdc import consistency
         report = {}
         for uid in self.ledger.scopes():
             g = replay_user(self.ledger, uid, self.core)
-            promoted = []
-            for t, b in g.traits.items():
-                if b.evidence >= min_evidence:
-                    d = round(self._cap(t, b.mean) - self.core[t], 3)
-                    if abs(d) >= promote_delta:
-                        promoted.append((t, d))
+            promoted = [(t, round(self._cap(t, b.mean) - self.core[t], 3))
+                        for t, b in g.traits.items()
+                        if b.evidence >= min_evidence
+                        and abs(self._cap(t, b.mean) - self.core[t]) >= promote_delta]
             if promoted:
-                self.ledger.save_snapshot(uid, g.to_dict(), {"promoted": promoted}, now=now)
-                report[uid] = promoted
+                cons = round(consistency(self.ledger.event_vectors(uid)), 3)
+                stats = {"promoted": promoted, "consistency": cons}
+                self.ledger.save_snapshot(uid, g.to_dict(), stats, now=now)
+                report[uid] = stats
         return report
 
     def reset(self, user_id=None, guild_id=None):

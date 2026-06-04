@@ -129,7 +129,7 @@ python3 tests/test_admin_voice.py  # rate limiter + moderation guard + voice par
 python3 tests/test_holo.py      # holographic HDC memory: portable, multilingual, cheap (6/6)
 python3 tests/test_agent.py     # agent tool-calling loop + admin guardrails (3/3)
 python3 tests/test_native.py    # C reference reproduces identical vectors (conformance)
-python3 tests/test_holopersona.py  # bounded adaptive personality: trace/immunity/learning/drift-cap/consolidation (11/11)
+python3 tests/test_holopersona.py  # bounded adaptive personality: trace/immunity/learning/drift-cap/consolidation/HDC (12/12)
 ```
 
 ## Agentic (OpenAI-compatible tool calling)
@@ -194,16 +194,20 @@ nitobot persona reset   --user <id>     # wipe a user's learned style
 nitobot persona export                  # dump the event ledger
 ```
 
-**Status (honest):** implemented and tested offline (`tests/test_holopersona.py`, **11/11**) are the
-trace parser/validator, HoloImmunity, deterministic signals, evidence-weighted per-user learning,
-session mood, identity bounds, an **enforced** drift cap (a learned trait can move at most ±0.35
-from the core — clamped, not just reported), periodic consolidation with auditable snapshots, the
-replayable ledger and the CLI. It is **wired into the LLM cog** (opt-in via `holopersona.enabled`,
-default on with the LLM): the per-user, drift-capped style card is injected into the prompt and
-every turn is recorded as bounded evidence — `persona.md` is never touched and a failure here never
-breaks a reply. **Not done yet:** learning comes from the deterministic text signals only (the LLM
-`holo_trace` JSON path isn't wired, since the cog uses tool-calling), and F4 full HDC event-vector
-binding (the ledger currently replays signals + trace, not bound hypervectors).
+**Status (honest):** implemented and tested offline (`tests/test_holopersona.py` 12/12 +
+`tests/test_trace_mode.py`) are the trace parser/validator, HoloImmunity, deterministic signals,
+evidence-weighted per-user learning, session mood, identity bounds, an **enforced** drift cap
+(±0.35 from core — clamped, not just reported), periodic consolidation with auditable snapshots,
+the **HDC event-vector layer** (role-filler binding / bundling / similarity, reusing the same
+cross-implementation `HOLO_SPEC` substrate as the memory) with an HDC *consistency* metric, a
+single-call **trace mode** (the same LLM emits `reply` + `holo_trace`, no extra classifier), the
+replayable ledger and the CLI. It's **wired into the LLM cog** (opt-in `holopersona.enabled`,
+default on with the LLM; `holopersona.trace` switches to trace mode): the drift-capped style card
+guides each reply and every turn is recorded as bounded evidence — `persona.md` is never touched
+and a failure here never breaks a reply. **Not done yet (honest):** only the *session* and
+*per-user relationship* layers learn today — *server-wide* and *global* style layers, follow-up
+outcome shaping (`observe_followup`), and HDC-clustering-*driven* promotion (consistency is
+reported, deterministic signals still drive it) are future work.
 
 ## Holographic memory
 

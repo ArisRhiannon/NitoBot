@@ -19,7 +19,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS holo_events(
   id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL, guild_id TEXT, channel_id TEXT,
   user_id TEXT, input_hash TEXT, reply_hash TEXT, holo_trace TEXT,
-  deterministic_signals TEXT, outcome TEXT, version TEXT);
+  deterministic_signals TEXT, outcome TEXT, event_vec BLOB, version TEXT);
 CREATE TABLE IF NOT EXISTS holo_snapshots(
   id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL, scope TEXT, state TEXT, stats TEXT, version TEXT);
 """
@@ -38,18 +38,31 @@ class Ledger:
     def __init__(self, path=":memory:"):
         self.db = sqlite3.connect(str(path))
         self.db.executescript(SCHEMA)
+        cols = [r[1] for r in self.db.execute("PRAGMA table_info(holo_events)")]
+        if "event_vec" not in cols:                       # migrate older ledgers
+            self.db.execute("ALTER TABLE holo_events ADD COLUMN event_vec BLOB")
+            self.db.commit()
 
     def append(self, *, user_id, text, reply, trace=None, guild_id="", channel_id="",
                outcome="neutral", now=None):
         now = time.time() if now is None else now
         sig = extract(text)
+        from .holo_hdc import encode_event, pack
+        ev = pack(encode_event(text, trace=trace, outcome=outcome,
+                               guild_id=guild_id, channel_id=channel_id, ts=now))
         self.db.execute(
             "INSERT INTO holo_events(ts,guild_id,channel_id,user_id,input_hash,reply_hash,"
-            "holo_trace,deterministic_signals,outcome,version) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            "holo_trace,deterministic_signals,outcome,event_vec,version) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
             (now, str(guild_id), str(channel_id), str(user_id), _h(text), _h(reply),
-             json.dumps(trace) if trace else None, json.dumps(sig), outcome, VERSION))
+             json.dumps(trace) if trace else None, json.dumps(sig), outcome, ev, VERSION))
         self.db.commit()
         return self.db.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+    def event_vectors(self, user_id):
+        from .holo_hdc import unpack
+        return [unpack(r[0]) for r in self.db.execute(
+            "SELECT event_vec FROM holo_events WHERE user_id=? AND event_vec IS NOT NULL ORDER BY id",
+            (str(user_id),)).fetchall()]
 
     def update_outcome(self, eid, outcome):
         self.db.execute("UPDATE holo_events SET outcome=? WHERE id=?", (outcome, eid))
