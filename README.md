@@ -156,6 +156,8 @@ model -> tool_calls -> dispatch (guarded) -> tool results -> final reply   (max 
 
 > **Stable at the core. Adaptive at the edges.**
 
+Full design doc: [HOLOPERSONA.md](HOLOPERSONA.md).
+
 HoloPersona is NitoBot's bounded adaptive personality layer. It stores replayable evidence
 from interactions and consolidates **stable** patterns into style preferences, while preserving
 an **immutable core persona** from `persona.md`. It is not a soul and does not "truly understand"
