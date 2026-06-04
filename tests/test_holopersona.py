@@ -114,12 +114,24 @@ def test_bounds_clamp_and_freeze_pins_to_core():
     print("ok H8 bounds clamp; freeze pins style to immutable core")
 
 
+def test_learning_changes_the_style_card():
+    # the card injected into the prompt must actually shift as the user's style consolidates,
+    # otherwise the live wiring would be a no-op.
+    hp = HoloPersona(db_path=":memory:")
+    before = hp.style_for("u")
+    for i in range(8):
+        hp.record(user_id="u", text="sé breve, ve al grano", reply="ok", now=1000.0 + i)
+    after = hp.style_for("u")
+    assert after != before and "short" in after.lower()
+    print("ok H9 learned preferences visibly change the active style card")
+
+
 def run():
     for fn in [test_trace_valid_clamps_and_filters, test_trace_invalid_json_still_gives_reply,
                test_trace_blocks_unsafe_memory_candidates, test_session_mood_decays,
                test_repeated_explicit_pref_consolidates_weak_does_not,
                test_silence_and_reset_and_replay_determinism, test_immunity_predicates,
-               test_bounds_clamp_and_freeze_pins_to_core]:
+               test_bounds_clamp_and_freeze_pins_to_core, test_learning_changes_the_style_card]:
         fn()
 
 

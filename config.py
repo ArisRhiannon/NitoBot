@@ -20,6 +20,7 @@ DEFAULTS = {
     "gossip_host": "127.0.0.1",
     "gossip_port": 8787,
     "network_secret": "",
+    "holopersona": {"enabled": True},
     "llm": {"enabled": False, "base_url": "", "api_key_env": "NITOBOT_LLM_KEY", "model": ""},
 }
 

@@ -16,6 +16,7 @@ import config
 from agent import run_agent, ToolContext
 from config import DATA
 from context import build_transcript
+from holopersona import HoloPersona, NITO_CORE
 from llm import LLMClient, build_messages
 from memory import MemoryStore
 from modutil import can_moderate
@@ -39,6 +40,9 @@ class LLM(commands.Cog):
         DATA.mkdir(parents=True, exist_ok=True)
         self.mem = MemoryStore(str(DATA / "memory.db"))
         self.history = {}
+        self.holo = (HoloPersona(db_path=DATA / "holo.db", state_path=DATA / "holo_state.json",
+                                 core=NITO_CORE)
+                     if bot.cfg.get("holopersona", {}).get("enabled", True) else None)
 
     def _context(self, guild, channel, requester) -> ToolContext:
         perms = getattr(requester, "guild_permissions", None)
@@ -98,11 +102,17 @@ class LLM(commands.Cog):
         scope = f"{guild.id}:{requester.id}"
         roster = ", ".join(f"{m.display_name}={m.id}" for m in ([requester] + list(mentions)))
         transcript = await self._fetch_transcript(channel)
+        style = ""
+        if self.holo is not None:
+            try:
+                style = "\n\n" + self.holo.style_for(requester.id, guild.id, channel.id, context=text)
+            except Exception:
+                style = ""
         sys_extra = (f"{self.persona}\nYou are in a Discord server. Requester is "
                      f"{'an admin' if self._context(guild, channel, requester).is_admin else 'a regular member'}. "
                      f"Members in scope (name=id): {roster}. Use tools when useful; never claim to have "
-                     f"acted unless a tool confirmed it.\n\nRecent channel conversation (oldest to newest, "
-                     f"includes bots):\n{transcript}")
+                     f"acted unless a tool confirmed it.{style}\n\nRecent channel conversation (oldest to "
+                     f"newest, includes bots):\n{transcript}")
         hist = self.history.get(channel.id, [])[-6:]
         messages = build_messages(sys_extra, self.mem.recall(scope, text, k=3), hist, text)
         reply = await run_agent(self.client, messages, self._context(guild, channel, requester))
@@ -110,6 +120,12 @@ class LLM(commands.Cog):
         turns += [{"role": "user", "content": text}, {"role": "assistant", "content": reply}]
         self.history[channel.id] = turns[-12:]
         self.mem.remember(scope, f"{text} -> {reply}")
+        if self.holo is not None:
+            try:                                              # bounded learning; never breaks a reply
+                self.holo.record(user_id=requester.id, text=text, reply=reply,
+                                 guild_id=guild.id, channel_id=channel.id)
+            except Exception:
+                pass
         return reply
 
     @app_commands.command(description="Ask Nito something (she can also act for admins).")

@@ -20,18 +20,20 @@ def blend(core, relationship=None, server=None, mood=None, bounds=None):
 
 
 def render(g) -> str:
-    def hi(t):
-        return g[t] >= 0.60
+    def hi(t, th=0.60):
+        return g[t] >= th
 
-    def lo(t):
-        return g[t] <= 0.25
+    def lo(t, th=0.30):
+        return g[t] <= th
 
     lines = ["Current style guidance:"]
-    lines.append("- Be direct and technically honest." if hi("directness")
-                 else "- Be gentle and measured.")
-    lines.append("- Prefer depth and explicit reasoning." if hi("depth")
-                 else "- Keep it concise." if hi("brevity")
-                 else "- Match the detail the question needs.")
+    lines.append("- Be direct and to the point." if hi("directness") else "- Be gentle and measured.")
+    if hi("depth"):
+        lines.append("- Prefer depth and explicit reasoning.")
+    if hi("brevity"):
+        lines.append("- Keep replies short and tight.")
+    elif lo("brevity"):
+        lines.append("- It's fine to be thorough here.")
     if lo("emoji"):
         lines.append("- Avoid emojis.")
     if lo("ornamentation"):
@@ -42,6 +44,8 @@ def render(g) -> str:
         lines.append("- Keep a warm, supportive tone.")
     if hi("softness"):
         lines.append("- Soft, not childish.")
+    if lo("playfulness"):
+        lines.append("- Keep it low-key, not jokey.")
     return "\n".join(lines)
 
 
