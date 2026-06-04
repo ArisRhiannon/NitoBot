@@ -26,7 +26,8 @@ nitobot = "cli:main"
 
 [tool.setuptools]
 py-modules = ["bot", "cli", "config", "economy", "earn", "nito", "peers", "memory",
-              "modutil", "voice_core", "automod_core", "agent", "context", "install"]
+              "modutil", "voice_core", "automod_core", "agent", "context", "install",
+              "llm", "social_store", "activity_store"]
 
 [tool.setuptools.packages.find]
 include = ["cogs*"]
